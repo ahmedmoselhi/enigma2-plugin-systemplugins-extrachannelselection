@@ -217,7 +217,9 @@ class ServiceList(HTMLComponent, GUIComponent):
 
                 if not pngname:
                     name = ServiceReference(service).getServiceName()
-                    name = unicodedata.normalize('NFKD', unicode(name, 'utf_8', errors='ignore')).encode('ASCII', 'ignore')
+                    if isinstance(name, bytes):
+                        name = name.decode('utf_8', errors='ignore')
+                    name = unicodedata.normalize('NFKD', name).encode('ASCII', 'ignore').decode('ASCII')
                     name = re.sub('[^a-z0-9]', '', name.replace('&', 'and').replace('+', 'plus').replace('*', 'star').lower())
                     if name:
                         for path in self.PiconPaths:
@@ -1515,14 +1517,14 @@ class ServiceList(HTMLComponent, GUIComponent):
         return index
 
     def moveToChar(self, char):
-        print 'Next char: '
+        print('Next char: ')
         index = self.getNextBeginningWithChar(char)
         indexup = self.getNextBeginningWithChar(char.upper())
         if indexup != 0:
             if index > indexup or index == 0:
                 index = indexup
         self.instance.moveSelectionTo(index)
-        print 'Moving to character ' + str(char)
+        print('Moving to character ' + str(char))
         return
 
     def moveToNextMarker(self):
@@ -1581,11 +1583,9 @@ class ServiceList(HTMLComponent, GUIComponent):
         if list is not None:
             while 1:
                 y = list.getNext()
-                if y.valid():
-                    dest.append(y.toString())
-            else:
-                break
-                continue
+                if not y.valid():
+                    break
+                dest.append(y.toString())
 
         return dest
 
@@ -1726,7 +1726,3 @@ class ServiceList(HTMLComponent, GUIComponent):
         self.l.setItemHeight(self.ItemHeight)
         return
 
-
-return
-
-# okay decompiling ./ServiceList.pyo

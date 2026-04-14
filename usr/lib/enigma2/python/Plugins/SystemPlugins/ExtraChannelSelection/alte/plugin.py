@@ -31,7 +31,7 @@ def _(txt):
     if gettext.dgettext(PluginLanguageDomain, txt):
         return gettext.dgettext(PluginLanguageDomain, txt)
     else:
-        print '[' + PluginLanguageDomain + '] fallback to default translation for ' + txt
+        print('[' + PluginLanguageDomain + '] fallback to default translation for ' + txt)
         return gettext.gettext(txt)
 
 
@@ -528,7 +528,7 @@ class BackScreen(Screen):
                 currentSkin = 'Default_skin'
             else:
                 currentSkin = currentSkin[:currentSkin.rfind('/')]
-            if selectEntry is 'save':
+            if selectEntry == 'save':
                 if fileExists((BACKUPPATH + '%s') % currentSkin):
                     self.session.openWithCallback(self.saveset, MessageBox, _('Backup file is already exists!\nDo you want rewrite backup file?'), MessageBox.TYPE_YESNO, timeout=8, default=False)
                 elif not fileExists((BACKUPPATH + '%s') % currentSkin):
@@ -547,7 +547,7 @@ class BackScreen(Screen):
                     h.write(l)
                     h.close()
                     self.session.open(MessageBox, _('Settings successfully saved!'), MessageBox.TYPE_INFO, timeout=6)
-            elif selectEntry is 'restore':
+            elif selectEntry == 'restore':
                 if not fileExists((BACKUPPATH + '%s') % currentSkin):
                     self.session.open(MessageBox, _('Backup file not exists!'), MessageBox.TYPE_INFO, timeout=6)
                 elif fileExists((BACKUPPATH + '%s') % currentSkin):
@@ -631,7 +631,7 @@ class BackScreen(Screen):
             if fileExists(RPATH + 'piconpathmodeo'):
                 system('rm -rf ' + RPATH + 'piconpathmodeo')
             from Screens.Console import Console
-            print 'run script'
+            print('run script')
             script = '/usr/lib/enigma2/python/Plugins/SystemPlugins/ExtraChannelSelection/script/restore_settings.sh'
             os.chmod(script, 493)
             self.session.open(Console, cmdlist=[script])
@@ -866,7 +866,7 @@ class ExtraChannelSelection(Screen, ConfigListScreen):
 
         def getPrevValues(section):
             res = {}
-            for key, val in section.content.items.items():
+            for key, val in list(section.content.items.items()):
                 if isinstance(val, ConfigSubsection):
                     res[key] = getPrevValues(val)
                 else:
@@ -1047,7 +1047,7 @@ class ExtraChannelSelection(Screen, ConfigListScreen):
     def cancel(self):
 
         def setPrevValues(section, values):
-            for key, val in section.content.items.items():
+            for key, val in list(section.content.items.items()):
                 value = values.get(key, None)
                 if value is not None:
                     if isinstance(val, ConfigSubsection):

@@ -9,7 +9,7 @@ from Tools.Profile import profile
 from Screens.Screen import Screen
 import Screens.InfoBar, Components.ParentalControl
 from Components.Button import Button
-from ServiceListhd import ServiceList, refreshServiceList
+from .ServiceListhd import ServiceList, refreshServiceList
 from Components.ActionMap import NumberActionMap, ActionMap, HelpableActionMap
 from Components.MenuList import MenuList
 from Components.ServiceEventTracker import ServiceEventTracker, InfoBarBase
@@ -412,7 +412,7 @@ class ChannelContextMenu(Screen):
             for file in os.listdir('/etc/enigma2/'):
                 if file.startswith('userbouquet') and file.endswith('.del'):
                     file = '/etc/enigma2/' + file
-                    print 'permantly remove file ', file
+                    print('permantly remove file ', file)
                     os.remove(file)
 
             self.close()
@@ -422,7 +422,7 @@ class ChannelContextMenu(Screen):
         for file in os.listdir('/etc/enigma2/'):
             if file.startswith('userbouquet') and file.endswith('.del'):
                 file = '/etc/enigma2/' + file
-                print 'restore file ', file[:-4]
+                print('restore file ', file[:-4])
                 os.rename(file, file[:-4])
 
         eDVBDBInstance = eDVBDB.getInstance()
@@ -567,7 +567,7 @@ class ChannelContextMenu(Screen):
             if self.session.pipshown:
                 del self.session.pip
                 if SystemInfo['LCDMiniTV'] and int(config.lcd.modepip.value) >= 1:
-                    print '[LCDMiniTV] disable PIP'
+                    print('[LCDMiniTV] disable PIP')
                     f = open('/proc/stb/lcd/mode', 'w')
                     f.write(config.lcd.minitvmode.value)
                     f.close()
@@ -582,7 +582,7 @@ class ChannelContextMenu(Screen):
                     self.session.pip.servicePath = self.csel.getCurrentServicePath()
                     self.session.pip.servicePath[1] = currentBouquet
                     if SystemInfo['LCDMiniTV'] and int(config.lcd.modepip.value) >= 1:
-                        print '[LCDMiniTV] enable PIP'
+                        print('[LCDMiniTV] enable PIP')
                         f = open('/proc/stb/lcd/mode', 'w')
                         f.write(config.lcd.minitvpipmode.value)
                         f.close()
@@ -600,7 +600,7 @@ class ChannelContextMenu(Screen):
                     self.session.pipshown = False
                     del self.session.pip
                     if SystemInfo['LCDMiniTV'] and int(config.lcd.modepip.value) >= 1:
-                        print '[LCDMiniTV] disable PIP'
+                        print('[LCDMiniTV] disable PIP')
                         f = open('/proc/stb/lcd/mode', 'w')
                         f.write(config.lcd.minitvmode.value)
                         f.close()
@@ -1207,7 +1207,7 @@ class ChannelSelectionEdit():
                 if mutableAlternatives:
                     mutableAlternatives.setListName(name)
                     if mutableAlternatives.addService(cur_service.ref):
-                        print 'add', cur_service.ref.toString(), 'to new alternatives failed'
+                        print('add', cur_service.ref.toString(), 'to new alternatives failed')
                     mutableAlternatives.flushChanges()
                     self.servicelist.addService(new_ref.ref, True)
                     self.servicelist.removeCurrent()
@@ -1218,11 +1218,11 @@ class ChannelSelectionEdit():
                     if self.startServiceRef and cur_service.ref == self.startServiceRef:
                         self.startServiceRef = new_ref.ref
                 else:
-                    print 'get mutable list for new created alternatives failed'
+                    print('get mutable list for new created alternatives failed')
             else:
-                print 'add', str, 'to', cur_root.getServiceName(), 'failed'
+                print('add', str, 'to', cur_root.getServiceName(), 'failed')
         else:
-            print 'bouquetlist is not editable'
+            print('bouquetlist is not editable')
         return
 
     def addBouquet(self, bName, services):
@@ -1245,11 +1245,11 @@ class ChannelSelectionEdit():
                     if services is not None:
                         for service in services:
                             if mutableBouquet.addService(service):
-                                print 'add', service.toString(), 'to new bouquet failed'
+                                print('add', service.toString(), 'to new bouquet failed')
 
                     mutableBouquet.flushChanges()
                 else:
-                    print 'get mutable list for new created bouquet failed'
+                    print('get mutable list for new created bouquet failed')
                 cur_root = self.getRoot()
                 str1 = cur_root and cur_root.toString()
                 pos1 = str1 and str1.find('FROM BOUQUET') or -1
@@ -1258,9 +1258,9 @@ class ChannelSelectionEdit():
                     self.servicelist.addService(new_bouquet_ref)
                     self.servicelist.resetRoot()
             else:
-                print 'add', str, 'to bouquets failed'
+                print('add', str, 'to bouquets failed')
         else:
-            print 'bouquetlist is not editable'
+            print('bouquetlist is not editable')
         return
 
     def copyCurrentToBouquetList(self):
@@ -1288,11 +1288,11 @@ class ChannelSelectionEdit():
                     if self.startServiceRef and cur_service.ref == self.startServiceRef:
                         self.startServiceRef = first_in_alternative
                 else:
-                    print "couldn't add first alternative service to current root"
+                    print("couldn't add first alternative service to current root")
             else:
-                print "couldn't edit current root!!"
+                print("couldn't edit current root!!")
         else:
-            print 'remove empty alternative list !!'
+            print('remove empty alternative list !!')
         self.removeBouquet()
         if not end:
             self.servicelist.moveUp()
@@ -1336,9 +1336,9 @@ class ChannelSelectionEdit():
             current = self.getCurrentSelection()
             unsigned_orbpos = current.getUnsignedData(4) >> 16
             if unsigned_orbpos == 65535:
-                eDVBDB.getInstance().removeServices(int('0xFFFF0000', 16) - 4294967296L)
+                eDVBDB.getInstance().removeServices(int('0xFFFF0000', 16) - 4294967296)
             elif unsigned_orbpos == 61166:
-                eDVBDB.getInstance().removeServices(int('0xEEEE0000', 16) - 4294967296L)
+                eDVBDB.getInstance().removeServices(int('0xEEEE0000', 16) - 4294967296)
             else:
                 curpath = current.getPath()
                 idx = curpath.find('satellitePosition == ')
@@ -1611,9 +1611,9 @@ class ChannelSelectionBase(Screen):
 
     def applyKeyMap(self):
         if config.usage.show_channel_jump_in_servicelist.value == 'alpha':
-            self.numericalTextInput.setUseableChars(u'abcdefghijklmnopqrstuvwxyz1234567890')
+            self.numericalTextInput.setUseableChars('abcdefghijklmnopqrstuvwxyz1234567890')
         else:
-            self.numericalTextInput.setUseableChars(u'1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+            self.numericalTextInput.setUseableChars('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ')
         return
 
     def getBouquetNumOffset(self, bouquet):
@@ -2180,10 +2180,9 @@ class ChannelSelectionBase(Screen):
         return
 
     def keyAsciiCode(self):
-        unichar = unichr(getPrevAsciiCode())
-        charstr = unichar.encode('utf-8')
-        if len(charstr) == 1:
-            self.servicelist.moveToChar(charstr[0])
+        char = chr(getPrevAsciiCode())
+        if len(char) == 1:
+            self.servicelist.moveToChar(char)
         return
 
     def getRoot(self):
@@ -2926,7 +2925,7 @@ class PiPZapSelection(ChannelSelection):
                     self.saveChannel(ref)
                     self.setCurrentSelection(ref)
                     if SystemInfo['LCDMiniTVPiP'] and int(config.lcd.minitvpipmode.value) >= 1:
-                        print '[LCDMiniTV] enable PIP'
+                        print('[LCDMiniTV] enable PIP')
                         f = open('/proc/stb/lcd/mode', 'w')
                         f.write(config.lcd.minitvpipmode.value)
                         f.close()
@@ -2945,7 +2944,7 @@ class PiPZapSelection(ChannelSelection):
                     self.session.pipshown = False
                     del self.session.pip
                     if SystemInfo['LCDMiniTVPiP'] and int(config.lcd.minitvpipmode.value) >= 1:
-                        print '[LCDMiniTV] disable PIP'
+                        print('[LCDMiniTV] disable PIP')
                         f = open('/proc/stb/lcd/mode', 'w')
                         f.write(config.lcd.minitvmode.value)
                         f.close()
@@ -2958,7 +2957,7 @@ class PiPZapSelection(ChannelSelection):
             self.session.pipshown = False
             del self.session.pip
             if SystemInfo['LCDMiniTVPiP'] and int(config.lcd.minitvpipmode.value) >= 1:
-                print '[LCDMiniTV] disable PIP'
+                print('[LCDMiniTV] disable PIP')
                 f = open('/proc/stb/lcd/mode', 'w')
                 f.write(config.lcd.minitvmode.value)
                 f.close()
@@ -3288,7 +3287,3 @@ class HistoryZapSelector(Screen):
         self.close(None)
         return
 
-
-return
-
-# okay decompiling ./ChannelSelectionhd.pyo
