@@ -552,10 +552,12 @@ def StartMainSession(reason, **kwargs):
     CHECKPATH = '/usr/lib/enigma2/python/Plugins/SystemPlugins/ExtraChannelSelection/forchek/'
     allow = False
     import os
-    current_file = CHANNELPATH + 'ChannelSelection.py'
-    check_file = CHECKPATH + 'ChannelSelection.py'
-    if fileExists(current_file) and fileExists(check_file):
-        allow = os.path.getsize(current_file) == os.path.getsize(check_file)
+    for suffix in ('.py', '.pyc'):
+        current_file = CHANNELPATH + 'ChannelSelection' + suffix
+        check_file = CHECKPATH + 'ChannelSelection' + suffix
+        if fileExists(current_file) and fileExists(check_file):
+            allow = os.path.getsize(current_file) == os.path.getsize(check_file)
+            break
     if allow:
         if config.plugins.ExtraChannelSelection.enabled.value:
             if not alreadyPatch():
