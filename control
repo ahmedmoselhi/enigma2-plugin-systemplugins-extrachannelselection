@@ -1,0 +1,11 @@
+Package: enigma2-plugin-extensions-extrachannelselection
+Version: 6.3
+Section: misc
+Priority: optional
+Architecture: all
+Maintainer: kitte888
+Description: ExtraChannelSelction Cs by kitte888
+Source: 
+Homepage: 
+OE: enigma2-plugins
+License: open

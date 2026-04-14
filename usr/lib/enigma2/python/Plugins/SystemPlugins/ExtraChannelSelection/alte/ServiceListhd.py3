@@ -1,0 +1,1800 @@
+# Embedded file name: usr\lib\enigma2\python\Plugins\SystemPlugins\ExtraChannelSelection\ServiceListhd.py
+# Spalten hoehe 				Zeile 181		OK
+# Sendername nach links 		Zeile xxxx
+# Sendungsname nach links 		Zeile 1267
+# Start End Zeit 				Zeile 884
+# Balken 						Zeile xxxx
+# % sendung 					Zeile 777
+# 
+#
+#
+#
+#
+#
+from Components.HTMLComponent import HTMLComponent
+from Components.GUIComponent import GUIComponent
+from enigma import iServiceInformation, eListboxServiceContent, eListbox, eServiceCenter, eServiceCenter_getInstance, eServiceReference, gFont, eRect, eEnv, eListboxPythonMultiContent, RT_WRAP, RT_VALIGN_TOP, RT_VALIGN_CENTER, RT_HALIGN_LEFT, RT_HALIGN_CENTER, RT_HALIGN_RIGHT, iServiceInformation, eEPGCache, eLabel, eSize, ePicLoad
+from Tools.LoadPixmap import LoadPixmap
+from Tools.Directories import resolveFilename, SCOPE_CURRENT_SKIN, fileExists, SCOPE_CURRENT_PLUGIN, SCOPE_SKIN_IMAGE
+from Components.config import *
+from ServiceReference import ServiceReference
+from Components.MultiContent import MultiContentEntryText, MultiContentEntryPixmapAlphaBlend
+from time import time, localtime
+import NavigationInstance
+from timer import TimerEntry
+from skin import parseColor, parseFont
+import Plugins.SystemPlugins.ExtraChannelSelection.plugin
+from Plugins.SystemPlugins.ExtraChannelSelection.plugin import namehours, namemin
+DOUBLE = False
+try:
+    if config.plugins.ExtraChannelSelection.listmode.value:
+        DOUBLE = True
+except:
+    pass
+
+DOUBL = False
+try:
+    if config.plugins.ExtraChannelSelection.doubmode.value:
+        DOUBL = True
+except:
+    pass
+
+BIGLINE = True
+try:
+    if config.plugins.ExtraChannelSelection.linemode.value == '2':
+        BIGLINE = False
+except:
+    pass
+
+def refreshServiceList(configElement = None):
+    from Screens.InfoBar import InfoBar
+    InfoBarInstance = InfoBar.instance
+    if InfoBarInstance is not None:
+        servicelist = InfoBarInstance.servicelist
+        if servicelist:
+            servicelist.setMode()
+    return
+
+
+class ServiceList(HTMLComponent, GUIComponent):
+    if config.plugins.ExtraChannelSelection.piconpathmode.value == '0':
+        PiconPaths = ('/usr/share/enigma2/picon/',
+         '/media/cf/picon/',
+         '/media/usb/picon/',
+         '/media/ba/picon/',
+         '/media/hdd/picon/',
+         '/picon/')
+    elif config.plugins.ExtraChannelSelection.piconpathmode.value == '1':
+        PiconPaths = ('/media/usb/transparentpicon/',)
+    elif config.plugins.ExtraChannelSelection.piconpathmode.value == '2':
+        PiconPaths = ('/media/usb/blackpicon/',)
+    elif config.plugins.ExtraChannelSelection.piconpathmode.value == '3':
+        PiconPaths = ('/media/usb/whitepicon/',)
+    elif config.plugins.ExtraChannelSelection.piconpathmode.value == '4':
+        PiconPaths = ('/media/usb/colorpicon/',)
+    elif config.plugins.ExtraChannelSelection.piconpathmode.value == '5':
+        PiconPaths = ('/media/hdd/transparentpicon/',)
+    elif config.plugins.ExtraChannelSelection.piconpathmode.value == '6':
+        PiconPaths = ('/media/hdd/blackpicon/',)
+    elif config.plugins.ExtraChannelSelection.piconpathmode.value == '7':
+        PiconPaths = ('/media/hdd/whitepicon/',)
+    elif config.plugins.ExtraChannelSelection.piconpathmode.value == '8':
+        PiconPaths = ('/media/hdd/colorpicon/',)
+    MODE_NORMAL = 0
+    MODE_FAVOURITES = 1
+
+    def __init__(self, serviceList):
+        self.serviceList = serviceList
+        GUIComponent.__init__(self)
+        self.picFolder = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/folderhd.png'))
+        self.picMarker = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/marker.png'))
+        self.picDVB_S = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/ico_dvb_s-fs8hd.png'))
+        self.picDVB_T = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/ico_dvb_t-fs8hd.png'))
+        self.picDVB_C = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/ico_dvb_c-fs8hd.png'))
+        self.picStream = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/ico_stream-fs8.png'))
+        self.picServiceGroup = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/ico_service_group-fs8.png'))
+        self.picCrypt = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/icon_crypt.png'))
+        self.picCrypt2 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/icon_crypt2.png'))
+        self.picCrypt3 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/icon_crypt3.png'))
+        self.picCrypt4 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/icon_crypt4.png'))
+        self.picCrypt5 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/icon_crypt5.png'))
+        self.picCrypt6 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/icon_crypt6.png'))
+        self.picCrypt7 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/icon_crypt7.png'))
+        self.picCrypt8 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/icon_crypt8.png'))
+        self.picCrypt9 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/icon_crypt9.png'))
+        self.picCrypt10 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/icon_crypt10.png'))
+        self.picCrypt11 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/icon_crypt11.png'))
+        self.picCrypt12 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/icon_crypt12.png'))
+        self.picCrypt13 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/icon_crypt13.png'))
+        self.picCrypt14 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/icon_crypt14.png'))
+        self.picCrypt15 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/icon_crypt15.png'))
+        self.picRecord = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/record2.png'))
+        self.Bar = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/longbar5.png'))
+        self.Bar1 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/longbar1.png'))
+        self.Bar2 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/longbar2.png'))
+        self.Bar3 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/longbar3.png'))
+        self.Bar4 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/longbar4.png'))
+        self.Bar5 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/longbar5.png'))
+        self.Bar6 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/longbar6.png'))
+        self.Bar7 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/longbar7.png'))
+        self.Bar8 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/longbar8.png'))
+        self.Bar9 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/longbar9.png'))
+        self.Bar10 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/longbar10.png'))
+        self.Bar11 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/longbar11.png'))
+        self.picBar = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/bar_prog99.png'))
+        self.picBar1 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/bar_prog111.png'))
+        self.picBar2 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/bar_prog22.png'))
+        self.picBar3 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/bar_prog33.png'))
+        self.picBar4 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/bar_prog44.png'))
+        self.picBar5 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/bar_prog55.png'))
+        self.picBar6 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/bar_prog66.png'))
+        self.picBar7 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/bar_prog77.png'))
+        self.picBar8 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/bar_prog88.png'))
+        self.picBar9 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/bar_prog99.png'))
+        self.picBar10 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/bar_prog100.png'))
+        self.picBar11 = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/bar_prog1111.png'))
+        self.timerclock = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, 'SystemPlugins/ExtraChannelSelection/images/clock2.png'))
+        self.markedForeground = 15774720
+        self.markedBackground = 624318628
+        self.markedForegroundSelected = 9437216
+        self.markedBackgroundSelected = 624318628
+        self.serviceNotAvail = 6710886
+        self.eventForeground = 10519808
+        self.eventForegroundSelected = 65535
+        self.serviceNameForeground = 16777215
+        self.serviceNameForegroundSelected = 16776960
+        self.eventborderForeground = None
+        self.serviceEventProgressbarColor = 5622089
+        self.serviceEventProgressbarColorSelected = 4772300
+        self.serviceEventProgressbarBorderColor = 6710886
+        self.serviceEventProgressbarBorderColorSelected = 8421631
+        self.l = eListboxPythonMultiContent()
+        self.S = eListboxServiceContent()
+        self.l.setBuildFunc(self.buildServiceList)
+        self.l.setFont(0, gFont('Regular', 32))
+        self.l.setFont(1, gFont('Regular', 27))
+        self.l.setFont(2, gFont('Regular', 32))
+        self.ServiceNameFont = gFont('Regular', 31)
+        self.l.setFont(3, gFont('Regular', 33))
+        self.l.setFont(4, gFont('Regular', 32))
+        self.l.setFont(5, gFont('Regular', 30))
+        self.l.setFont(6, gFont('Regular', 30))
+        self.l.setFont(10, gFont('Regular', 29))
+        self.l.setFont(7, gFont('Regular', 41))
+        self.l.setFont(8, gFont('Regular', 27))
+        self.l.setFont(9, gFont('Regular', 22))
+        self.l.setFont(11, gFont('Regular', 30))
+        self.l.setFont(12, gFont('Regular', 27))
+        self.l.setFont(13, gFont('Regular', 31))
+        self.list = []
+        self.size = 0
+        self.service_center = eServiceCenter.getInstance()
+        self.numberoffset = 0
+        self.is_playable_ignore = eServiceReference()
+        self.current_marked = False
+        self.marked = []
+        self.marker_list = []
+        self.l.lookupService = self.lookupService
+        self.root = None
+        self.mode = self.MODE_NORMAL
+        if DOUBLE:
+            self.ItemHeight = 75
+        else:
+            self.ItemHeight = 60 if BIGLINE else 48
+        self.l.setItemHeight(self.ItemHeight)
+        self.onSelectionChanged = []
+        return
+
+    def checkRecording(self):
+        self.waitrecordingServices = []
+        if config.plugins.ExtraChannelSelection.recordmode.value != '0':
+            if len(NavigationInstance.instance.RecordTimer.timer_list) != 0:
+                for timer in NavigationInstance.instance.RecordTimer.timer_list:
+                    if timer.state == TimerEntry.StateWaiting:
+                        self.waitrecordingServices.append(str(timer.service_ref))
+                    elif timer.state == TimerEntry.StatePrepared:
+                        self.waitrecordingServices.append(str(timer.service_ref))
+
+    def findPicon(self, service = None):
+        if config.plugins.ExtraChannelSelection.piconmode.value:
+            if service is not None:
+                import os, re, unicodedata
+                from Tools.Alternatives import GetWithAlternative
+                service = service.toString()
+                service = '_'.join(GetWithAlternative(service).split(':', 10)[:10])
+                for path in self.PiconPaths:
+                    pngname = path + service + '.png'
+                    if fileExists(pngname):
+                        return pngname
+
+                if not pngname:
+                    fields = service.split('_', 3)
+                    if len(fields) > 2:
+                        if fields[0] != '1':
+                            fields[0] = '1'
+                            for path in self.PiconPaths:
+                                pngname = path + '_'.join(fields) + '.png'
+                                if fileExists(pngname):
+                                    return pngname
+
+                        if not pngname and fields[2] != '2':
+                            fields[2] = '1'
+                            for path in self.PiconPaths:
+                                pngname = path + '_'.join(fields) + '.png'
+                                if fileExists(pngname):
+                                    return pngname
+
+                if not pngname:
+                    name = ServiceReference(service).getServiceName()
+                    name = unicodedata.normalize('NFKD', unicode(name, 'utf_8', errors='ignore')).encode('ASCII', 'ignore')
+                    name = re.sub('[^a-z0-9]', '', name.replace('&', 'and').replace('+', 'plus').replace('*', 'star').lower())
+                    if name:
+                        for path in self.PiconPaths:
+                            pngname = path + name + '.png'
+                            if fileExists(pngname):
+                                return pngname
+                            if not pngname and len(name) > 2 and name.endswith('hd'):
+                                pngname = path + name[:-2] + '.png'
+                                if fileExists(pngname):
+                                    return pngname
+
+        return
+
+    def buildServiceList(self, service, **args):
+        piconmode = config.plugins.ExtraChannelSelection.piconmode.value
+        bigpicomode = config.plugins.ExtraChannelSelection.bigpicomode.value
+        if piconmode:
+            self.picon = ePicLoad()
+            picon = self.findPicon(service)
+            if picon is None:
+                tmp = resolveFilename(SCOPE_CURRENT_SKIN, 'picon_default.png')
+                picon = tmp if fileExists(tmp) else resolveFilename(SCOPE_SKIN_IMAGE, 'skin_default/picon_default.png')
+            if DOUBLE:
+                piconWidth = 100 if bigpicomode == '1' else 150
+                piconHeight = 60 if bigpicomode == '1' else 90
+            else:
+                piconWidth = 100 if BIGLINE else 80
+                piconHeight = 60 if BIGLINE else 48
+            self.picon.setPara((piconWidth,
+             piconHeight,
+             1,
+             1,
+             False,
+             1,
+             '#000f0f0f'))
+            self.picon.startDecode(picon, 0, 0, False)
+            picon2 = self.picon.getData()
+        width = self.l.getItemSize().width()
+        selected = True
+        try:
+            selected = args['selected']
+        except:
+            pass
+
+        res = [None]
+        service_info = self.service_center.info(service)
+        isMarker = service.flags & eServiceReference.isMarker
+        isPlayable = not (service.flags & eServiceReference.isDirectory or isMarker)
+        recording = False
+        pixmap = None
+        pixico = None
+        fontnum = config.plugins.ExtraChannelSelection.fontnum.value
+        fontperc = config.plugins.ExtraChannelSelection.fontperc.value
+        fontname = config.plugins.ExtraChannelSelection.fontname.value
+        fontevent = config.plugins.ExtraChannelSelection.fontevent.value
+        fontend = config.plugins.ExtraChannelSelection.fontend.value
+        fontrem = config.plugins.ExtraChannelSelection.fontrem.value
+        fonttxt = config.plugins.ExtraChannelSelection.fonttxt.value
+        fontsat = config.plugins.ExtraChannelSelection.fontsat.value
+        self.sizedict = {'1': 22,
+         '2': 23,
+         '3': 24,
+         '4': 25,
+         '5': 26,
+         '6': 27,
+         '7': 28,
+         '8': 29,
+         '9': 30,
+         '10': 31,
+         '11': 32,
+         '12': 33,
+         '13': 34,
+         '14': 35,
+         '15': 36,
+         '16': 37,
+         '17': 38,
+         '18': 39,
+         '19': 40}
+        if fontnum in self.sizedict:
+            self.l.setFont(0, gFont('Regular', self.sizedict[fontnum]))
+        elif DOUBLE:
+            self.l.setFont(0, gFont('Regular', 35))
+        else:
+            self.l.setFont(0, gFont('Regular', 35)) if BIGLINE else self.l.setFont(0, gFont('Regular', 32))
+        if fontperc in self.sizedict:
+            self.l.setFont(1, gFont('Regular', self.sizedict[fontperc]))
+        elif DOUBLE:
+            self.l.setFont(1, gFont('Regular', 30))
+        else:
+            self.l.setFont(1, gFont('Regular', 30)) if BIGLINE else self.l.setFont(1, gFont('Regular', 26))
+        if fontname in self.sizedict:
+            self.l.setFont(2, gFont('Regular', self.sizedict[fontname]))
+            self.ServiceNameFont = gFont('Regular', self.sizedict[fontname])
+        elif DOUBLE:
+            self.l.setFont(2, gFont('Regular', 36))
+        else:
+            self.l.setFont(2, gFont('Regular', 36)) if BIGLINE else self.l.setFont(2, gFont('Regular', 33))
+        if fontevent in self.sizedict:
+            self.l.setFont(3, gFont('Regular', self.sizedict[fontevent]))
+        elif DOUBLE:
+            self.l.setFont(3, gFont('Regular', 32))
+        else:
+            self.l.setFont(3, gFont('Regular', 29)) if BIGLINE else self.l.setFont(3, gFont('Regular', 24))
+        if fontend in self.sizedict:
+            self.l.setFont(4, gFont('Regular', self.sizedict[fontend]))
+        elif DOUBLE:
+            self.l.setFont(4, gFont('Regular', 32))
+        else:
+            self.l.setFont(4, gFont('Regular', 32)) if BIGLINE else self.l.setFont(4, gFont('Regular', 26))
+        if fontrem in self.sizedict:
+            self.l.setFont(5, gFont('Regular', self.sizedict[fontrem]))
+        elif DOUBLE:
+            self.l.setFont(5, gFont('Regular', 31))
+        else:
+            self.l.setFont(5, gFont('Regular', 31)) if BIGLINE else self.l.setFont(5, gFont('Regular', 25))
+        if fonttxt in self.sizedict:
+            self.l.setFont(6, gFont('Regular', self.sizedict[fonttxt]))
+        elif DOUBLE:
+            self.l.setFont(6, gFont('Regular', 30))
+        else:
+            self.l.setFont(6, gFont('Regular', 30)) if BIGLINE else self.l.setFont(6, gFont('Regular', 25))
+        if fontsat in self.sizedict:
+            self.l.setFont(10, gFont('Regular', self.sizedict[fontsat]))
+        elif DOUBLE:
+            self.l.setFont(10, gFont('Regular', 30))
+        else:
+            self.l.setFont(10, gFont('Regular', 30)) if BIGLINE else self.l.setFont(10, gFont('Regular', 25))
+        showline = config.plugins.ExtraChannelSelection.showline.value
+        colshowline = config.plugins.ExtraChannelSelection.colshowline.value
+        usagemode = config.plugins.ExtraChannelSelection.progress.value
+        iconmode = config.plugins.ExtraChannelSelection.iconmode.value
+        crypticonmode = config.plugins.ExtraChannelSelection.crypticonmode.value
+        barmode = config.plugins.ExtraChannelSelection.barmode.value
+        percmode = config.plugins.ExtraChannelSelection.percmode.value
+        barpercmode = config.plugins.ExtraChannelSelection.barpercmode.value
+        percshow = config.plugins.ExtraChannelSelection.percshow.value
+        percpos = config.plugins.ExtraChannelSelection.percpos.value
+        nummode = config.plugins.ExtraChannelSelection.nummode.value
+        coltext = config.plugins.ExtraChannelSelection.coltext.value
+        colnum = config.plugins.ExtraChannelSelection.colnum.value
+        colselnum = config.plugins.ExtraChannelSelection.colselnum.value
+        colend = config.plugins.ExtraChannelSelection.colend.value
+        colselend = config.plugins.ExtraChannelSelection.colselend.value
+        colremain = config.plugins.ExtraChannelSelection.colremain.value
+        colselremain = config.plugins.ExtraChannelSelection.colselremain.value
+        colsat = config.plugins.ExtraChannelSelection.colsat.value
+        colselsat = config.plugins.ExtraChannelSelection.colselsat.value
+        colbar = config.plugins.ExtraChannelSelection.colbar.value
+        colbarsel = config.plugins.ExtraChannelSelection.colbarsel.value
+        picbar = config.plugins.ExtraChannelSelection.picbar.value
+        colborder = config.plugins.ExtraChannelSelection.colborder.value
+        colbordersel = config.plugins.ExtraChannelSelection.colbordersel.value
+        colname = config.plugins.ExtraChannelSelection.colname.value
+        colnamesel = config.plugins.ExtraChannelSelection.colnamesel.value
+        colperc = config.plugins.ExtraChannelSelection.colperc.value
+        colpercsel = config.plugins.ExtraChannelSelection.colpercsel.value
+        colevent = config.plugins.ExtraChannelSelection.colevent.value
+        coleventsel = config.plugins.ExtraChannelSelection.coleventsel.value
+        text = config.plugins.ExtraChannelSelection.text.value
+        pixbar2 = config.plugins.ExtraChannelSelection.picbar.value
+        self.colordict = {'1': 5636889,
+         '2': 1401021,
+         '3': 8421504,
+         '4': 3100495,
+         '5': 32896,
+         '6': 65535,
+         '7': 1644912,
+         '8': 4620980,
+         '9': 65280,
+         '10': 12632256,
+         '11': 36080,
+         '12': 16776960,
+         '13': 16711680,
+         '14': 16711935,
+         '15': 16777215,
+         '16': 255,
+         '17': 9127187,
+         '18': 14423100,
+         '19': 6908265,
+         '20': 13808780,
+         '21': 3050327,
+         '22': 16761035,
+         '23': 12211667,
+         '24': 13458524,
+         '25': 16444375,
+         '26': 65407,
+         '27': 4915330,
+         '28': 25600,
+         '29': 5597999,
+         '31': 0,
+         '32': 10263708,
+         '33': 1182351,
+         '34': 5003366,
+         '35': 1651533,
+         '36': 1709375,
+         '37': 3493235,
+         '38': 15706442,
+         '39': 33646,
+         '40': 6684927,
+         '41': 1540205,
+         '42': 10263708,
+         '43': 1138786,
+         '44': 2778232,
+         '45': 12344664,
+         '46': 4227693,
+         '47': 16034048}
+        self.picdict = {'1': self.picBar,
+         '2': self.picBar11,
+         '3': self.picBar1,
+         '4': self.picBar2,
+         '5': self.picBar3,
+         '6': self.picBar4,
+         '7': self.picBar5,
+         '8': self.picBar6,
+         '9': self.picBar7,
+         '10': self.picBar8,
+         '11': self.picBar9,
+         '12': self.picBar10}
+        self.pixdict = {'1': self.Bar,
+         '2': self.Bar11,
+         '3': self.Bar1,
+         '4': self.Bar2,
+         '5': self.Bar3,
+         '6': self.Bar4,
+         '7': self.Bar5,
+         '8': self.Bar6,
+         '9': self.Bar7,
+         '10': self.Bar8,
+         '11': self.Bar9,
+         '12': self.Bar10}
+        if DOUBLE:
+            if DOUBL:
+                if pixbar2 in self.pixdict:
+                    pixlong = self.pixdict[pixbar2]
+        if text:
+            txtColor = self.colordict[coltext] if coltext in self.colordict else self.markedForeground
+        if barmode == '1':
+            barColor = self.colordict[colbar] if colbar in self.colordict else self.serviceEventProgressbarColor
+            barColorSel = self.colordict[colbarsel] if colbarsel in self.colordict else self.serviceEventProgressbarColorSelected
+        elif barmode == '2':
+            if picbar in self.picdict:
+                pixbar = self.picdict[picbar]
+            borderColorSel = self.colordict[colbordersel] if colbordersel in self.colordict else self.serviceEventProgressbarBorderColorSelected
+        borderColor = self.colordict[colborder] if colborder in self.colordict else self.serviceEventProgressbarBorderColor
+        satColor = self.colordict[colsat] if colsat in self.colordict else 16444375
+        satColorSel = self.colordict[colselsat] if colselsat in self.colordict else 16444375
+        showlineColor = self.colordict[colshowline] if colshowline in self.colordict else 8421504
+        if not config.plugins.ExtraChannelSelection.colormode.value:
+            numColor = self.colordict[colnum] if colnum in self.colordict else self.eventForeground
+            numColorSel = self.colordict[colselnum] if colselnum in self.colordict else self.eventForegroundSelected
+            nameColor = self.colordict[colname] if colname in self.colordict else self.serviceNameForeground
+            nameColorSel = self.colordict[colnamesel] if colnamesel in self.colordict else self.serviceNameForegroundSelected
+            percColor = self.colordict[colperc] if colperc in self.colordict else self.eventForeground
+            percColorSel = self.colordict[colpercsel] if colpercsel in self.colordict else self.eventForegroundSelected
+            eventColor = self.colordict[colevent] if colevent in self.colordict else self.eventForeground
+            eventColorSel = self.colordict[coleventsel] if coleventsel in self.colordict else self.eventForegroundSelected
+            if config.plugins.ExtraChannelSelection.listmode.value:
+                endColor = self.colordict[colend] if colend in self.colordict else self.eventForeground
+                endColorSel = self.colordict[colselend] if colselend in self.colordict else self.eventForegroundSelected
+                remColor = self.colordict[colremain] if colremain in self.colordict else self.markedForeground
+                remColorSel = self.colordict[colselremain] if colselremain in self.colordict else self.markedForegroundSelected
+        else:
+            numColor = self.eventForeground
+            numColorSel = self.eventForegroundSelected
+            endColor = self.eventForeground
+            endColorSel = self.eventForegroundSelected
+            remColor = self.markedForeground
+            remColorSel = self.markedForegroundSelected
+            nameColor = self.serviceNameForeground
+            nameColorSel = self.serviceNameForegroundSelected
+            percColor = self.eventForeground
+            percColorSel = self.eventForegroundSelected
+            eventColor = self.eventForeground
+            eventColorSel = self.eventForegroundSelected
+        notChannelMode = False
+        if service.flags & eServiceReference.isMarker:
+            pixmap = self.picMarker
+            notChannelMode = True
+            selected = False
+        elif service.flags & eServiceReference.isGroup:
+            pixmap = self.picServiceGroup
+            notChannelMode = True
+        elif service.flags & eServiceReference.isDirectory:
+            pixmap = self.picFolder
+            notChannelMode = True
+        else:
+            refstr = service.toString()
+            if '%3a//' in refstr or refstr.startswith('4097:'):
+                pixico = self.picStream
+            if pixico != self.picStream:
+                orbpos = service.getUnsignedData(4) >> 16
+                if orbpos == 65535:
+                    pixico = self.picDVB_C
+                elif orbpos == 61166:
+                    pixico = self.picDVB_T
+                elif orbpos == 0:
+                    pixico = self.picDVB_T
+                else:
+                    pixico = self.picDVB_S
+        height = self.l.getItemSize().height()
+        yDouble = height / 2
+        marked = 0
+        if self.current_marked and selected:
+            marked = 2
+        elif self.isMarked(service):
+            if selected:
+                marked = 2
+            else:
+                marked = 1
+        if marked == 1:
+            backgroundColor = backgroundColorSel = None
+        elif marked == 2:
+            numColorSel = nameColorSel = percColorSel = eventColorSel = endColorSel = remColorSel = foregroundColorSel = self.markedForegroundSelected
+            backgroundColorSel = self.markedBackgroundSelected
+            foregroundColor = serviceDescriptionColor = backgroundColor = None
+        else:
+            backgroundColor = backgroundColorSel = None
+        if marked == 0 and isPlayable and service_info and self.is_playable_ignore.valid() and not service_info.isPlayable(service, self.is_playable_ignore):
+            numColor = numColorSel = nameColor = nameColorSel = percColor = percColorSel = eventColor = eventColorSel = endColor = endColorSel = remColor = remColorSel = txtColor = self.serviceNotAvail
+        addingResText = lambda a, b, c, d, e, f, g, h, o, p, r: res.append((eListboxPythonMultiContent.TYPE_TEXT,
+         a,
+         b,
+         c,
+         d,
+         e,
+         f,
+         g,
+         h,
+         o,
+         p,
+         r))
+        addingResPix = lambda a, b, c, d, e: res.append((eListboxPythonMultiContent.TYPE_PIXMAP_ALPHATEST,
+         a,
+         b,
+         c,
+         d,
+         e))
+        addingResPr = lambda a, b, c, d, e, f, g, h, o, p: res.append((eListboxPythonMultiContent.TYPE_PROGRESS,
+         a,
+         b,
+         c,
+         d,
+         e,
+         f,
+         g,
+         h,
+         o,
+         p))
+        addingResPrPix = lambda a, b, c, d, e, f, g, h, o: res.append((eListboxPythonMultiContent.TYPE_PROGRESS_PIXMAP,
+         a,
+         b,
+         c,
+         d,
+         e,
+         f,
+         g,
+         h,
+         o))
+        rthr = RT_HALIGN_RIGHT
+        rthcrtvc = RT_HALIGN_CENTER | RT_VALIGN_CENTER
+        rthrrtvc = RT_HALIGN_RIGHT | RT_VALIGN_CENTER
+        rthlrtvc = RT_HALIGN_LEFT | RT_VALIGN_CENTER
+        if marked > 0:
+            addingResText(0, 0, width, height, 1, rthr, '', foregroundColor, foregroundColorSel, backgroundColor, backgroundColorSel)
+        info = self.service_center.info(service)
+        serviceName = info.getName(service) or ServiceReference(service).getServiceName() or ''
+        event = info.getEvent(service)
+        index = self.getCurrentIndex()
+        xPos = 4
+        xPos1 = 4
+        xPos2 = 4
+        picomode = config.plugins.ExtraChannelSelection.picomode.value
+        remmode = config.plugins.ExtraChannelSelection.remmode.value
+        bordermode = config.plugins.ExtraChannelSelection.bordermode.value
+        recordmode = config.plugins.ExtraChannelSelection.recordmode.value
+        endmode = config.plugins.ExtraChannelSelection.endmode.value
+        piccryptmode = config.plugins.ExtraChannelSelection.picicocrypt.value
+        timericonmode = config.plugins.ExtraChannelSelection.timericonmode.value
+        isCrypted = False
+        if crypticonmode == '0':
+            isCrypted = False
+        else:
+            isCrypted = service_info.isCrypted()
+        isRecorded = False
+        if recordmode == '0':
+            isRecorded = False
+        else:
+            getrecord = eListboxServiceContent()
+            isRecorded = isPlayable & getrecord.checkServiceIsRecorded(service)
+        isWaitingTimer = False
+        if timericonmode == '0':
+            isWaitingTimer = False
+        else:
+            self.checkRecording()
+            if service.toString() in self.waitrecordingServices:
+                isWaitingTimer = True
+        if pixmap is not None:
+            pixmap_size = pixmap.size()
+            yPos = (height - pixmap_size.height()) / 2
+            pix_width = pixmap_size.width()
+            pix_height = pixmap_size.height()
+            addingResPix(xPos, yPos, pix_width, pix_height, pixmap)
+            xPos += pix_width + 5
+            xPos1 += pix_width + 5
+        if pixico is not None:
+            if iconmode == '1':
+                pixico_size = pixico.size()
+                yP = (height - pixico_size.height()) / 2
+                pic_width = pixico_size.width()
+                pic_height = pixico_size.height()
+                addingResPix(xPos + 15, yP, 40, pic_height, pixico)
+                xPos1 += 60
+                xPos2 = 60
+                xPos += 60
+        if not nummode:
+            pass
+        elif self.mode != self.MODE_NORMAL:
+            if not service.flags & eServiceReference.isMarker:
+                markers_before = 0
+                for markers in self.marker_list:
+                    if index > markers:
+                        markers_before += 1
+                    else:
+                        break
+
+                num = '%d' % (self.numberoffset + index + 1 - markers_before)
+                numCol = 16711680 if isRecorded else numColor
+                numColSel = 16711680 if isRecorded else numColorSel
+                if DOUBLE:
+                    if recordmode == '3':
+                        addingResText(xPos, 2, 87, height, 7, rthcrtvc, num, numCol, numColSel, backgroundColor, backgroundColorSel)
+                        xPos += 93
+                        xPos1 = xPos
+                        xPos2 = xPos
+                    else:
+                        addingResText(xPos, 2, 87, height, 7, rthcrtvc, num, numColor, numColorSel, backgroundColor, backgroundColorSel)
+                        xPos += 93
+                        xPos1 = xPos
+                        xPos2 = xPos
+                elif recordmode == '3':
+                    if BIGLINE:
+                        addingResText(xPos, 0, 65, height, 0, rthcrtvc, num, numCol, numColSel, backgroundColor, backgroundColorSel)
+                        xPos += 65
+                        xPos1 = 65
+                        xPos2 = 65
+                    else:
+                        addingResText(xPos, 0, 60, height, 0, rthcrtvc, num, numCol, numColSel, backgroundColor, backgroundColorSel)
+                        xPos += 65
+                        xPos1 = xPos
+                        xPos2 = xPos
+                elif BIGLINE:
+                    addingResText(xPos, 0, 65, height, 0, rthcrtvc, num, numCol, numColSel, backgroundColor, backgroundColorSel)
+                    xPos += 65
+                    xPos1 = 65
+                    xPos2 = 65
+                else:
+                    addingResText(xPos, 0, 60, height, 0, rthcrtvc, num, numCol, numColSel, backgroundColor, backgroundColorSel)
+                    xPos += 65
+                    xPos1 = xPos
+                    xPos2 = xPos
+        if piccryptmode == '1':
+            icocrypt = self.picCrypt
+        elif piccryptmode == '2':
+            icocrypt = self.picCrypt2
+        elif piccryptmode == '3':
+            icocrypt = self.picCrypt3
+        elif piccryptmode == '4':
+            icocrypt = self.picCrypt4
+        elif piccryptmode == '5':
+            icocrypt = self.picCrypt5
+        elif piccryptmode == '6':
+            icocrypt = self.picCrypt6
+        elif piccryptmode == '7':
+            icocrypt = self.picCrypt7
+        elif piccryptmode == '8':
+            icocrypt = self.picCrypt8
+        elif piccryptmode == '9':
+            icocrypt = self.picCrypt9
+        elif piccryptmode == '10':
+            icocrypt = self.picCrypt10
+        elif piccryptmode == '11':
+            icocrypt = self.picCrypt11
+        elif piccryptmode == '12':
+            icocrypt = self.picCrypt12
+        elif piccryptmode == '13':
+            icocrypt = self.picCrypt13
+        elif piccryptmode == '14':
+            icocrypt = self.picCrypt14
+        else:
+            icocrypt = self.picCrypt15
+        if not notChannelMode:
+            bar = 0
+            perc = ''
+            if event and isPlayable:
+                i = 100 * (int(time()) - event.getBeginTime()) / event.getDuration()
+                if i < 101:
+                    bar = i
+                    perc = str(i) + '%' if percmode == '1' else '(' + str(i) + '%' + ')'
+            if DOUBLE:
+                if piconmode:
+                    if bigpicomode == '1':
+                        wt = 100
+                        ht = 60
+                        a = xPos if picomode == '1' else width - 101
+                        e = 110 if picomode == '1' else 0
+                        ot = 14
+                        addingResPix(a, ot, wt, ht, picon2)
+                        xPos += e
+                        xPos1 += e
+                        xPos2 += e
+                    elif bigpicomode == '2':
+                        wtt = 150
+                        htt = 90
+                        if picomode == '1':
+                            att = xPos
+                            ett = 160
+                        else:
+                            att = width - 151
+                            ett = 0
+                        ott = 0
+                        addingResPix(att, ott, wtt, htt, picon2)
+                        xPos += ett
+                        xPos1 += ett
+                        xPos2 += ett
+                remain = ''
+                if isPlayable:
+                    self.renderLabel.setFont(self.ServiceNameFont)
+                    self.renderLabel.setText(serviceName)
+                    length = self.renderLabel.calculateSize().width() * 1.2
+                    if remmode == '1' and event:
+                        r = (event.getBeginTime() + event.getDuration()) / 60 - int(time() / 60)
+                        remain = '(+' + str(r) + ' ' + namemin() + ')'
+                    if remmode == '2' and event:
+                        r = (event.getBeginTime() + event.getDuration()) / 60 - int(time() / 60)
+                        rh = r / 60
+                        rm = r - rh * 60
+                        remain = '(+' + str(rh) + namehours() + str(rm) + namemin() + ')'
+                    if not DOUBL:
+                        if showline:
+                            addingResText(xPos, height - 1, width, 1, 1, rthrrtvc, '', None, None, showlineColor, None)
+                        if barmode == '1':
+                            addingResPr(xPos + 3, 17, 75, 12, bar, 1, barColor, barColorSel, backgroundColor, backgroundColorSel)
+                            xPos += 85
+                        else:
+                            addingResPrPix(xPos + 3, 17, 75, 12, bar, pixbar, 1, borderColor, borderColorSel)
+                            xPos += 85
+                        if percshow:
+                            addingResText(xPos - 55, 2, 95, height / 2, 1, rthcrtvc, perc, percColor, percColorSel, backgroundColor, backgroundColorSel)
+                            xPos += 105
+                        if crypticonmode == '1':
+                            if isCrypted:
+                                cryptpixmap_size = icocrypt.size()
+                                pixx_width = cryptpixmap_size.width()
+                                pixx_height = cryptpixmap_size.height()
+                                if pixx_height < height / 2:
+                                    ppp = (height / 2 - pixx_height) / 2
+                                    ttt = pixx_height
+                                else:
+                                    ppp = 0
+                                    ttt = height / 2
+                                addingResPix(xPos + 5, ppp, pixx_width, ttt, icocrypt)
+                                xPos += pixx_width + 15
+                            if not isCrypted:
+                                cryptpixmap_size = icocrypt.size()
+                                pixx_width = cryptpixmap_size.width()
+                                xPos += pixx_width + 15
+                        if timericonmode == '1':
+                            if isWaitingTimer:
+                                timerpixmap_size = self.timerclock.size()
+                                pixtimer_width = timerpixmap_size.width()
+                                pixtimer_height = timerpixmap_size.height()
+                                if pixtimer_height < height / 2:
+                                    jjk = (height / 2 - pixtimer_height) / 2
+                                    hhj = pixtimer_height
+                                else:
+                                    jjk = 0
+                                    hhj = height / 2
+                                addingResPix(xPos + 2, jjk, pixtimer_width, hhj, self.timerclock)
+                                xPos += pixtimer_width + 15
+                        if recordmode == '1':
+                            if isRecorded:
+                                recpixmap_size = self.picRecord.size()
+                                pixrec_width = recpixmap_size.width()
+                                pixrec_height = recpixmap_size.height()
+                                if pixrec_height < height / 2:
+                                    jjk = (height / 2 - pixrec_height) / 2
+                                    hhj = pixrec_height
+                                else:
+                                    jjk = 0
+                                    hhj = height / 2
+                                addingResPix(xPos + 5, jjk, pixrec_width, hhj, self.picRecord)
+                                xPos += pixrec_width + 15
+                        nameCol = 16711680 if isRecorded else nameColor
+                        nameColSel = 16711680 if isRecorded else nameColorSel
+                        addingResText(xPos, 2, length, yDouble - 4, 2, rthlrtvc, serviceName, nameCol, nameColSel, backgroundColor, backgroundColorSel)
+                        xPos += length + 5
+                        if pixico is not None:
+                            if iconmode == '2':
+                                pixico_size = pixico.size()
+                                pic_width = pixico_size.width()
+                                pic_height = pixico_size.height()
+                                lgh = (height / 2 - pic_height) / 2 if pic_height < height / 2 else 0
+                                igj = pic_height if pic_height < height / 2 else height / 2
+                                addingResPix(xPos + 10, lgh, 45, igj, pixico)
+                                xPos += 65
+                        if crypticonmode == '2':
+                            if isCrypted:
+                                cryptpixmap_size = icocrypt.size()
+                                pixx_width = cryptpixmap_size.width()
+                                pixx_height = cryptpixmap_size.height()
+                                iii = (height / 2 - pixx_height) / 2 if pixx_height < height / 2 else 0
+                                eee = pixx_height if pixx_height < height / 2 else height / 2
+                                addingResPix(xPos + 5, iii, pixx_width, eee, icocrypt)
+                                xPos += pixx_width + 15
+                        if timericonmode == '2':
+                            if isWaitingTimer:
+                                timerpixmap_size = self.timerclock.size()
+                                pixtimer_width = timerpixmap_size.width()
+                                pixtimer_height = timerpixmap_size.height()
+                                if pixtimer_height < height / 2:
+                                    jjk = (height / 2 - pixtimer_height) / 2
+                                    hhj = pixtimer_height
+                                else:
+                                    jjk = 0
+                                    hhj = height / 2
+                                addingResPix(xPos + 2, jjk, pixtimer_width, hhj, self.timerclock)
+                                xPos += pixtimer_width + 15
+                        if recordmode == '2':
+                            addingResText(xPos, 2, length, yDouble - 4, 2, rthlrtvc, serviceName, nameColor, nameColorSel, backgroundColor, backgroundColorSel)
+                            xPos += length + 5
+                            if isRecorded:
+                                recpixmap_size = self.picRecord.size()
+                                pixrec_width = recpixmap_size.width()
+                                pixrec_height = recpixmap_size.height()
+                                jjk = (height / 2 - pixrec_height) / 2 if pixrec_height < height / 2 else 0
+                                hhj = pixrec_height if pixrec_height < height / 2 else height / 2
+                                addingResPix(xPos + 10, jjk, pixrec_width, hhj, self.picRecord)
+                                xPos += pixrec_width + 20
+                        if remmode != '3' and event:
+                            addingResText(xPos1, yDouble + 1, 180, yDouble - 3, 5, rthcrtvc, remain, remColor, remColorSel, None, None)
+                        xPos1 += 295
+                        xPos2 += 295
+                        if endmode and event:
+                            begin = localtime(event.getBeginTime())
+                            end = localtime(event.getBeginTime() + event.getDuration())
+                            if piconmode:
+                                if picomode == '1':
+                                    ff = width - xPos
+                                elif bigpicomode == '1':
+                                    ff = width - xPos - 110 if width - xPos - 110 > 0 else 0
+                                elif bigpicomode == '2':
+                                    ff = width - xPos - 160 if width - xPos - 160 > 0 else 0
+                            else:
+                                ff = width - xPos
+                            addingResText(xPos + 110, 3, ff, yDouble - 5, 4, rthlrtvc, '%02d.%02d - %02d.%02d' % (begin[3],
+                             begin[4],
+                             end[3],
+                             end[4]), endColor, endColorSel, backgroundColor, backgroundColorSel)
+                    else:
+                        if piconmode:
+                            if picomode == '1':
+                                cc = width - xPos
+                                jj = length if length < width - xPos else width - xPos - 5
+                            else:
+                                cc = width - xPos - 101
+                                jj = length if length < width - xPos - 105 else width - xPos - 105
+                        else:
+                            jj = length
+                            cc = width - xPos
+                        bd = 1 if bordermode else 0
+                        addingResPrPix(xPos, 80, cc, 6, bar, pixlong, bd, None, None)
+                        if remmode != '3':
+                            addingResText(xPos1, 42, 180, 36, 5, rthcrtvc, remain, remColor, remColorSel, None, None)
+                        xPos1 += 185
+                        xPos2 += 185
+                        if crypticonmode == '1':
+                            if isCrypted:
+                                cryptpixmap_size = icocrypt.size()
+                                pixx_width = cryptpixmap_size.width()
+                                pixx_height = cryptpixmap_size.height()
+                                ggg = (38 - pixx_height) / 2 if pixx_height < 38 else 2
+                                hhh = pixx_height if pixx_height < 38 else 36
+                                addingResPix(xPos + 10, ggg, pixx_width, hhh, icocrypt)
+                                xPos += pixx_width + 15
+                            else:
+                                cryptpixmap_size = icocrypt.size()
+                                pixx_width = cryptpixmap_size.width()
+                                xPos += pixx_width + 15
+                        self.renderLabel.setFont(self.ServiceNameFont)
+                        self.renderLabel.setText(serviceName)
+                        length = self.renderLabel.calculateSize().width() + 10
+                        if timericonmode == '1':
+                            if isWaitingTimer:
+                                timerpixmap_size = self.timerclock.size()
+                                pixtimer_width = timerpixmap_size.width()
+                                pixtimer_height = timerpixmap_size.height()
+                                if pixtimer_height < height / 2:
+                                    jjk = (height / 2 - pixtimer_height) / 2
+                                    hhj = pixtimer_height
+                                else:
+                                    jjk = 0
+                                    hhj = height / 2
+                                addingResPix(xPos + 2, jjk, pixtimer_width, hhj, self.timerclock)
+                                xPos += pixtimer_width + 15
+                        if recordmode == '1':
+                            if isRecorded:
+                                recpixmap_size = self.picRecord.size()
+                                pixrec_width = recpixmap_size.width()
+                                pixrec_height = recpixmap_size.height()
+                                jjk = (38 - pixrec_height) / 2 if pixrec_height < 38 else 2
+                                hhj = pixrec_height if pixrec_height < 38 < 38 else 36
+                                addingResPix(xPos + 10, jjk, pixrec_width, hhj, self.picRecord)
+                                xPos += pixrec_width + 15
+                        nameCol = 16711680 if isRecorded else nameColor
+                        nameColSel = 16711680 if isRecorded else nameColorSel
+                        addingResText(xPos + 10, 2, jj, 36, 2, rthlrtvc, serviceName, nameCol, nameColSel, backgroundColor, backgroundColorSel)
+                        xPos += jj + 15
+                        if pixico is not None:
+                            if iconmode == '2':
+                                pixico_size = pixico.size()
+                                pic_width = pixico_size.width()
+                                pic_height = pixico_size.height()
+                                lgh = (height / 2 - pic_height) / 2 if pic_height < height / 2 else 0
+                                igj = pic_height if pic_height < height / 2 else height / 2
+                                addingResPix(xPos + 17, lgh - 1, 45, igj - 2, pixico)
+                                xPos += 62
+                        if crypticonmode == '2':
+                            if isCrypted:
+                                cryptpixmap_size = icocrypt.size()
+                                pixx_width = cryptpixmap_size.width()
+                                pixx_height = cryptpixmap_size.height()
+                                iii = (height / 2 - pixx_height) / 2 if pixx_height < height / 2 else 0
+                                eee = pixx_height if pixx_height < height / 2 else height / 2
+                                addingResPix(xPos + 8, iii - 1, pixx_width, eee - 2, icocrypt)
+                                xPos += pixx_width + 15
+                        if timericonmode == '2':
+                            if isWaitingTimer:
+                                timerpixmap_size = self.timerclock.size()
+                                pixtimer_width = timerpixmap_size.width()
+                                pixtimer_height = timerpixmap_size.height()
+                                if pixtimer_height < height / 2:
+                                    jjk = (height / 2 - pixtimer_height) / 2
+                                    hhj = pixtimer_height
+                                else:
+                                    jjk = 0
+                                    hhj = height / 2
+                                addingResPix(xPos + 2, jjk, pixtimer_width, hhj, self.timerclock)
+                                xPos += pixtimer_width + 15
+                        if recordmode == '2':
+                            if isRecorded:
+                                recpixmap_size = self.picRecord.size()
+                                pixrec_width = recpixmap_size.width()
+                                pixrec_height = recpixmap_size.height()
+                                jjk = (height / 2 - pixrec_height) / 2 if pixrec_height < height / 2 else 0
+                                hhj = pixrec_height if pixrec_height < height / 2 < 38 else height / 2
+                                addingResPix(xPos + 10, jjk, pixrec_width, hhj, self.picRecord)
+                                xPos += pixrec_width + 15
+                        if endmode and event:
+                            if piconmode:
+                                if picomode == '1':
+                                    tnt = width - xPos if width - xPos > 0 else 0
+                                elif bigpicomode == '1':
+                                    tnt = width - xPos - 110 if width - xPos - 110 > 0 else 0
+                                elif bigpicomode == '2':
+                                    tnt = width - xPos - 160 if width - xPos - 160 > 0 else 0
+                            else:
+                                tnt = width - xPos
+                            begin = localtime(event.getBeginTime())
+                            end = localtime(event.getBeginTime() + event.getDuration())
+                            addingResText(xPos + 15, 3, tnt, 35, 4, rthlrtvc, '%02d.%02d - %02d.%02d' % (begin[3],
+                             begin[4],
+                             end[3],
+                             end[4]), endColor, endColorSel, backgroundColor, backgroundColorSel)
+            elif isPlayable:
+                self.renderLabel.setFont(self.ServiceNameFont)
+                self.renderLabel.setText(serviceName)
+                length = self.renderLabel.calculateSize().width() * 1.2
+                if showline:
+                    addingResText(0, height - 1, width, 1, 1, rthrrtvc, '', None, None, showlineColor, None)
+                if piconmode:
+                    ee = 0
+                    ss = 5
+                    if BIGLINE:
+                        if picomode == '1':
+                            oo = xPos
+                            ss = 106
+                        else:
+                            oo = width - 105
+                        lr = 100
+                        li = 60
+                    else:
+                        if picomode == '1':
+                            oo = xPos
+                            ss = 96
+                        else:
+                            oo = width - 85
+                        lr = 80
+                        li = 48
+                    addingResPix(oo, 0, lr, li, picon2)
+                    xPos += ss
+                    if barmode == '1' and usagemode != 'no':
+                        if usagemode != 'barright':
+                            qq = xPos + 5
+                            if not barpercmode:
+                                ee = 80
+                        elif BIGLINE:
+                            qq = width - 80 if picomode == '1' else width - 185
+                        else:
+                            qq = width - 80 if picomode == '1' else width - 170
+                        ww = (height - 12) / 2 if not barpercmode else height - 16
+                        addingResPr(qq, ww, 70, 12, bar, 1, barColor, barColorSel, backgroundColor, backgroundColorSel)
+                        xPos += ee + 5
+                    elif barmode == '2' and usagemode != 'no':
+                        if usagemode != 'barright':
+                            qq = xPos + 5
+                            if not barpercmode:
+                                ee = 80
+                        elif BIGLINE:
+                            qq = width - 80 if picomode == '1' else width - 185
+                        else:
+                            qq = width - 80 if picomode == '1' else width - 170
+                        ww = height - 16 if barpercmode else (height - 12) / 2
+                        addingResPrPix(qq, ww, 70, 12, bar, pixbar, 1, borderColor, borderColorSel)
+                        xPos += ee
+                    if percshow:
+                        ii = 0
+                        if not barpercmode:
+                            tt = 0
+                            yy = height
+                            uu = 1
+                            if percpos == '1':
+                                rr = xPos + 5
+                                ii = 100 if BIGLINE else 90
+                                tr = 95 if BIGLINE else 85
+                            elif BIGLINE:
+                                tr = 95
+                                if picomode == '1':
+                                    if usagemode != 'barright':
+                                        rr = width - 85
+                                    elif usagemode == 'barright':
+                                        rr = width - 165
+                                elif usagemode != 'barright':
+                                    rr = width - 190
+                                elif usagemode == 'barright':
+                                    rr = width - 275
+                            else:
+                                tr = 85
+                                if picomode == '1':
+                                    if usagemode != 'barright':
+                                        rr = width - 75
+                                    elif usagemode == 'barright':
+                                        rr = width - 155
+                                elif usagemode != 'barright':
+                                    rr = width - 185
+                                elif usagemode == 'barright':
+                                    rr = width - 265
+                        else:
+                            tt = 2
+                            yy = height - 18
+                            uu = 8
+                            if BIGLINE:
+                                tr = 95
+                                if percpos == '1':
+                                    rr = xPos - 5
+                                    ii = 85
+                                else:
+                                    rr = width - 85 if picomode == '1' else width - 198
+                            else:
+                                tr = 85
+                                if percpos == '1':
+                                    rr = xPos
+                                    ii = 75
+                                else:
+                                    rr = width - 75 if picomode == '1' else width - 180
+                        addingResText(rr, tt, tr, yy, uu, rthcrtvc, perc, percColor, percColorSel, backgroundColor, backgroundColorSel)
+                        xPos += ii
+                    if crypticonmode == '1':
+                        if isCrypted:
+                            cryptpixmap_size = icocrypt.size()
+                            pixx_width = cryptpixmap_size.width()
+                            pixx_height = cryptpixmap_size.height()
+                            www = (height - pixx_height) / 2
+                            addingResPix(xPos, www, pixx_width, pixx_height, icocrypt)
+                            xPos += pixx_width + 5
+                        else:
+                            cryptpixmap_size = icocrypt.size()
+                            pixx_width = cryptpixmap_size.width()
+                            xPos += pixx_width + 5
+                    if timericonmode == '1':
+                        if isWaitingTimer:
+                            timerpixmap_size = self.timerclock.size()
+                            pixtimer_width = timerpixmap_size.width()
+                            pixtimer_height = timerpixmap_size.height()
+                            www = (height - pixtimer_height) / 2
+                            addingResPix(xPos + 2, www, pixtimer_width, pixtimer_height, self.timerclock)
+                            xPos += pixtimer_width + 15
+                    if recordmode == '1':
+                        if isRecorded:
+                            recpixmap_size = self.picRecord.size()
+                            pixrec_width = recpixmap_size.width()
+                            pixrec_height = recpixmap_size.height()
+                            kjj = (height - pixrec_height) / 2
+                            addingResPix(xPos + 5, kjj, pixrec_width, pixrec_height, self.picRecord)
+                            xPos += pixrec_width + 10
+                else:
+                    ee = 0
+                    if barmode == '1' and usagemode != 'no':
+                        if usagemode != 'barright':
+                            qq = xPos
+                            if not barpercmode:
+                                ee = 85
+                        else:
+                            qq = width - 85
+                        ww = height - 16 if barpercmode else (height - 12) / 2
+                        addingResPr(qq, ww, 75, 12, bar, 1, barColor, barColorSel, backgroundColor, backgroundColorSel)
+                        xPos += ee
+                    elif barmode == '2' and usagemode != 'no':
+                        if usagemode != 'barright':
+                            qq = xPos
+                            if not barpercmode:
+                                ee = 85
+                        else:
+                            qq = width - 60
+                        ww = height - 16 if barpercmode else (height - 14) / 2
+                        addingResPrPix(qq, ww, 75, 12, bar, pixbar, 1, borderColor, borderColorSel)
+                        xPos += ee
+                    if percshow:
+                        ii = 0
+                        if not barpercmode:
+                            tt = 0
+                            yy = height
+                            uu = 1
+                            if percpos == '1':
+                                ii = 85
+                                rr = xPos
+                            elif usagemode != 'barright':
+                                rr = width - 85
+                            elif usagemode == 'barright':
+                                rr = width - 170
+                        else:
+                            tt = 2
+                            yy = height - 18
+                            uu = 8
+                            if percpos == '1':
+                                rr = xPos
+                                ii = 85
+                            else:
+                                rr = width - 85
+                        addingResText(rr, tt, 80, yy, uu, rthcrtvc, perc, percColor, percColorSel, backgroundColor, backgroundColorSel)
+                        xPos += ii
+                    if crypticonmode == '1':
+                        if isCrypted:
+                            cryptpixmap_size = icocrypt.size()
+                            pixx_width = cryptpixmap_size.width()
+                            pixx_height = cryptpixmap_size.height()
+                            www = (height - pixx_height) / 2
+                            addingResPix(xPos, www, pixx_width, pixx_height, icocrypt)
+                            xPos += pixx_width + 5
+                        else:
+                            cryptpixmap_size = icocrypt.size()
+                            pixx_width = cryptpixmap_size.width()
+                            xPos += pixx_width + 5
+                    if timericonmode == '1':
+                        if isWaitingTimer:
+                            timerpixmap_size = self.timerclock.size()
+                            pixtimer_width = timerpixmap_size.width()
+                            pixtimer_height = timerpixmap_size.height()
+                            www = (height - pixtimer_height) / 2
+                            addingResPix(xPos + 2, www, pixtimer_width, pixtimer_height, self.timerclock)
+                            xPos += pixtimer_width + 15
+                    if recordmode == '1':
+                        if isRecorded:
+                            recpixmap_size = self.picRecord.size()
+                            pixrec_width = recpixmap_size.width()
+                            pixrec_height = recpixmap_size.height()
+                            kjj = (height - pixrec_height) / 2
+                            addingResPix(xPos, kjj, pixrec_width, pixrec_height, self.picRecord)
+                            xPos += pixrec_width + 5
+                nameCol = 16711680 if isRecorded else nameColor
+                nameColSel = 16711680 if isRecorded else nameColorSel
+                jl = xPos + 5 if BIGLINE else xPos + 16
+                addingResText(jl, 0, length, height, 2, rthlrtvc, serviceName, nameCol, nameColSel, backgroundColor, backgroundColorSel)
+                xPos += length + 5
+                if pixico is not None:
+                    if iconmode == '2':
+                        pixico_size = pixico.size()
+                        yPos = (height - pixico_size.height()) / 2
+                        pix_width = pixico_size.width()
+                        addingResPix(xPos + 10, yPos, 37, height, pixico)
+                        xPos += 50
+                if crypticonmode == '2':
+                    if isCrypted:
+                        cryptpixmap_size = icocrypt.size()
+                        pixx_width = cryptpixmap_size.width()
+                        pixx_height = cryptpixmap_size.height()
+                        www = (height - pixx_height) / 2
+                        addingResPix(xPos, www, pixx_width, pixx_height, icocrypt)
+                        xPos += pixx_width
+                if timericonmode == '2':
+                    if isWaitingTimer:
+                        timerpixmap_size = self.timerclock.size()
+                        pixtimer_width = timerpixmap_size.width()
+                        pixtimer_height = timerpixmap_size.height()
+                        www = (height - pixtimer_height) / 2
+                        addingResPix(xPos + 2, www, pixtimer_width, pixtimer_height, self.timerclock)
+                        xPos += pixtimer_width + 15
+                if recordmode == '2':
+                    jl = xPos + 5 if BIGLINE else xPos + 16
+                    addingResText(jl, 0, length, height, 2, rthlrtvc, serviceName, nameColor, nameColorSel, backgroundColor, backgroundColorSel)
+                    xPos += length + 5
+                    if isRecorded:
+                        recpixmap_size = self.picRecord.size()
+                        pixrec_width = recpixmap_size.width()
+                        pixrec_height = recpixmap_size.height()
+                        kjj = (height - pixrec_height) / 2
+                        addingResPix(xPos, kjj, pixrec_width, pixrec_height, self.picRecord)
+                        xPos += pixrec_width + 5
+        if event and isPlayable:
+            begin = localtime(event.getBeginTime())
+            end = localtime(event.getBeginTime() + event.getDuration())
+            eventmode = config.plugins.ExtraChannelSelection.eventmode.value
+            percpos = config.plugins.ExtraChannelSelection.percpos.value
+            if eventmode == '1':
+                eventname = '%s' % event.getEventName()
+            elif eventmode == '2':
+                eventname = '(%s)' % event.getEventName()
+            elif eventmode == '3':
+                eventname = '-%s' % event.getEventName()
+            if DOUBLE:
+                if not DOUBL:
+                    if piconmode:
+                        if picomode == '1':
+                            hh = width - xPos1 - 15
+                        else:
+                            hh = width - xPos1 - 115 if bigpicomode == '1' else width - xPos1 - 165
+                    else:
+                        hh = width - xPos1 - 5
+                    addingResText(xPos1 - 55, yDouble + 1, hh, yDouble - 4, 3, rthlrtvc, eventname, eventColor, eventColorSel, backgroundColor, backgroundColorSel)
+                else:
+                    if piconmode:
+                        if picomode == '1':
+                            bn = width - xPos1 - 15
+                        else:
+                            bn = width - xPos1 - 115 if bigpicomode == '1' else width - xPos1 - 165
+                    else:
+                        bn = width - xPos1 - 15
+                    addingResText(xPos1 + 15, 42, bn, 36, 3, rthlrtvc, eventname, eventColor, eventColorSel, backgroundColor, backgroundColorSel)
+            else:
+                if BIGLINE:
+                    le = xPos + 10
+                else:
+                    le = xPos + 20
+                if usagemode == 'barright':
+                    if percshow:
+                        if not barpercmode:
+                            if percpos == '1':
+                                if piconmode:
+                                    kk = width - xPos - 85 if picomode == '1' else width - xPos - 180
+                                else:
+                                    kk = width - xPos - 85
+                            elif piconmode:
+                                kk = width - xPos - 170 if picomode == '1' else width - xPos - 275
+                            else:
+                                kk = width - xPos - 170
+                        elif piconmode:
+                            kk = width - xPos - 85 if picomode == '1' else width - xPos - 195
+                        else:
+                            kk = width - xPos - 85
+                    elif piconmode:
+                        kk = width - xPos - 85 if picomode == '1' else width - xPos - 165
+                    else:
+                        kk = width - xPos - 85
+                if usagemode != 'barright':
+                    if percshow:
+                        if not barpercmode:
+                            if percpos == '1':
+                                if piconmode:
+                                    kk = width - xPos if picomode == '1' else width - xPos - 110
+                                else:
+                                    kk = width - xPos
+                            elif piconmode:
+                                kk = width - xPos - 85 if picomode == '1' else width - xPos - 200
+                            else:
+                                kk = width - xPos - 85
+                        elif piconmode:
+                            if picomode == '1':
+                                kk = width - xPos
+                            else:
+                                kk = width - xPos - 110 if BIGLINE else width - xPos - 85
+                        else:
+                            kk = width - xPos
+                    elif piconmode:
+                        kk = width - xPos - 85 if picomode == '1' else width - xPos - 170
+                    else:
+                        kk = width - xPos - 85
+                addingResText(le, 0, kk - 15, height, 3, rthlrtvc, eventname, eventColor, eventColorSel, backgroundColor, backgroundColorSel)
+        elif DOUBLE:
+            notEpg = _('No EPG data available')
+            if notChannelMode:
+                addingResText(xPos + 10, 2, width - xPos - 20, 86, 10, rthlrtvc, serviceName, satColor, satColorSel, backgroundColor, backgroundColorSel)
+            elif text:
+                if DOUBL:
+                    nn = 47
+                    if piconmode:
+                        mm = width - xPos2 if picomode == '1' else width - xPos - 105
+                    else:
+                        mm = width - xPos2
+                    qw = 40
+                    we = 6
+                else:
+                    nn = 47
+                    if piconmode:
+                        mm = width - xPos2 - 10 if picomode == '1' else width - xPos2 - 115
+                    else:
+                        mm = width - xPos2
+                    qw = 40
+                    we = 12
+                addingResText(xPos2 - 5, nn, mm, qw, we, rthlrtvc, notEpg, txtColor, 16444375, backgroundColor, backgroundColorSel)
+        else:
+            self.renderLabel.setFont(self.ServiceNameFont)
+            self.renderLabel.setText(serviceName)
+            length = self.renderLabel.calculateSize().width() + 10
+            notEpg = _('No EPG data available')
+            if notChannelMode:
+                addingResText(xPos + 10, 2, width - xPos - 30, height - 4, 10, rthlrtvc, serviceName, satColor, satColorSel, backgroundColor, backgroundColorSel)
+            elif DOUBLE:
+                if not DOUBL:
+                    if text:
+                        if piconmode:
+                            er = width - xPos2 - 15 if picomode == '1' else width - xPos2 - 115
+                        else:
+                            width - xPos2 - 5
+                        addingResText(xPos1 + 5, yDouble + 2, er, yDouble - 4, 6, rthlrtvc, notEpg, txtColor, 16444375, backgroundColor, backgroundColorSel)
+                elif text:
+                    if piconmode:
+                        rt = width - xPos1 - 10 if picomode == '1' else width - xPos1 - 115
+                    else:
+                        rt = width - xPos1
+                    addingResText(xPos1 + 5, 47, rt, 40, 6, rthlrtvc, notEpg, txtColor, 16444375, backgroundColor, backgroundColorSel)
+            elif text:
+                if usagemode == 'barright':
+                    if not barpercmode:
+                        if piconmode:
+                            ty = width - xPos - 95 if picomode == '1' else width - xPos - 205
+                        else:
+                            ty = width - xPos - 80
+                    elif piconmode:
+                        if picomode == '1':
+                            ty = width - xPos - 112 if picomode == '1' else width - xPos - 107
+                        else:
+                            ty = width - xPos - 127 if picomode == '1' else width - xPos - 207
+                    elif barpercmode:
+                        ty = width - xPos - 5 if picomode == '1' else width - xPos - 105
+                if usagemode != 'barright':
+                    if not barpercmode:
+                        if piconmode:
+                            if picomode == '1':
+                                ty = width - xPos - 12 if picomode == '1' else width - xPos - 107
+                            else:
+                                ty = width - xPos - 127 if picomode == '1' else width - xPos - 207
+                        else:
+                            ty = width - xPos - 12 if picomode == '1' else width - xPos - 107
+                    elif picomode == '1':
+                        ty = width - xPos - 12 if picomode == '1' else width - xPos - 107
+                    else:
+                        ty = width - xPos - 127 if picomode == '1' else width - xPos - 207
+                addingResText(xPos + 12, 0, ty, height, 6, rthlrtvc, notEpg, txtColor, 16444375, backgroundColor, backgroundColorSel)
+        return res
+
+    def applySkin(self, desktop, parent):
+        attribs = []
+        if self.skinAttributes is not None:
+            attribs = []
+            for attrib, value in self.skinAttributes:
+                if attrib == 'foregroundColorMarked':
+                    self.markedForeground = parseColor(value).argb()
+                elif attrib == 'foregroundColorMarkedSelected':
+                    self.markedForegroundSelected = parseColor(value).argb()
+                elif attrib == 'backgroundColorMarked':
+                    self.markedBackground = parseColor(value).argb()
+                elif attrib == 'backgroundColorMarkedSelected':
+                    self.markedBackgroundSelected = parseColor(value).argb()
+                elif attrib == 'foregroundColorServiceNotAvail':
+                    self.serviceNotAvail = parseColor(value).argb()
+                elif attrib == 'foregroundColorEvent' or attrib == 'colorServiceDescription':
+                    self.eventForeground = parseColor(value).argb()
+                elif attrib == 'foregroundColorEventSelected' or attrib == 'colorServiceDescriptionSelected':
+                    self.eventForegroundSelected = parseColor(value).argb()
+                elif attrib == 'foregroundColorEventborder':
+                    pass
+                elif attrib == 'foregroundColorEventborderSelected':
+                    pass
+                elif attrib == 'colorEventProgressbar':
+                    self.colorEventProgressbar = parseColor(value).argb()
+                elif attrib == 'colorEventProgressbarSelected':
+                    self.serviceEventProgressbarColorSelected = parseColor(value).argb()
+                elif attrib == 'colorEventProgressbarBorder':
+                    self.serviceEventProgressbarBorderColor = parseColor(value).argb()
+                elif attrib == 'colorEventProgressbarBorderSelected':
+                    self.serviceEventProgressbarBorderColorSelected = parseColor(value).argb()
+                elif attrib == 'colorServiceRecorded':
+                    pass
+                elif attrib == 'colorFallbackItem':
+                    pass
+                elif attrib == 'colorServiceSelectedFallback':
+                    pass
+                elif attrib == 'colorServiceDescriptionFallback':
+                    pass
+                elif attrib == 'colorServiceDescriptionSelectedFallback':
+                    pass
+                elif attrib == 'picServiceEventProgressbar':
+                    pass
+                elif attrib == 'serviceItemHeight':
+                    pass
+                elif attrib == 'serviceNameFont':
+                    pass
+                elif attrib == 'serviceInfoFont':
+                    pass
+                elif attrib == 'serviceNumberFont':
+                    pass
+                elif attrib == 'progressbarHeight':
+                    pass
+                elif attrib == 'progressbarBorderWidth':
+                    pass
+                elif attrib == 'progressBarWidth':
+                    pass
+                elif attrib == 'progressPercentWidth':
+                    pass
+                elif attrib == 'fieldMargins':
+                    pass
+                elif attrib == 'nonplayableMargins':
+                    pass
+                elif attrib == 'itemsDistances':
+                    pass
+                else:
+                    attribs.append((attrib, value))
+
+            self.skinAttributes = attribs
+        return GUIComponent.applySkin(self, desktop, parent)
+
+    def connectSelChanged(self, fnc):
+        if fnc not in self.onSelectionChanged:
+            self.onSelectionChanged.append(fnc)
+
+    def disconnectSelChanged(self, fnc):
+        if fnc in self.onSelectionChanged:
+            self.onSelectionChanged.remove(fnc)
+
+    def selectionChanged(self):
+        for i in self.onSelectionChanged:
+            i()
+
+    def setCurrent(self, ref, adjust = True):
+        index = 0
+        x = 0
+        for i in self.list:
+            if i[0] == ref:
+                index = x
+                break
+            x += 1
+
+        self.instance.moveSelectionTo(index)
+
+    def getCurrent(self):
+        r = eServiceReference()
+        cur = self.l.getCurrentSelection()
+        return cur and cur[0] or r
+
+    def getPrev(self):
+        pass
+
+    def getNext(self):
+        pass
+
+    def setFontsize(self):
+        pass
+
+    def setItemsPerPage(self):
+        pass
+
+    def atBegin(self):
+        if self.list:
+            return self.instance.atBegin()
+        else:
+            return True
+
+    def atEnd(self):
+        if self.list:
+            return self.instance.atEnd()
+        else:
+            return True
+
+    def servicePageUp(self):
+        cur = None
+        if self.current_marked:
+            cur = self.l.getCurrentSelection()
+        self.instance.moveSelection(self.instance.pageUp)
+        if self.current_marked:
+            self.changePage(cur)
+        return
+
+    def servicePageDown(self):
+        cur = None
+        if self.current_marked:
+            cur = self.l.getCurrentSelection()
+        self.instance.moveSelection(self.instance.pageDown)
+        if self.current_marked:
+            self.changePage(cur)
+        return
+
+    def changePage(self, cur):
+        if cur and cur[0]:
+            index = self.getCurrentIndex()
+            self.list.remove(cur)
+            self.list.insert(index, cur)
+            self.buildMarkerList()
+            self.l.invalidate()
+
+    def moveUp(self):
+        if self.current_marked:
+            cur = self.l.getCurrentSelection()
+            if cur and cur[0]:
+                index = self.list.index(cur)
+                newindex = index - 1
+                if newindex < 0:
+                    self.list.remove(cur)
+                    self.list.append(cur)
+                    self.buildMarkerList()
+                else:
+                    self.updateList(index, newindex)
+        self.instance.moveSelection(self.instance.moveUp)
+
+    def moveDown(self):
+        if self.current_marked:
+            cur = self.l.getCurrentSelection()
+            if cur and cur[0]:
+                index = self.list.index(cur)
+                newindex = index + 1
+                list_size = len(self.list) - 1
+                if newindex > list_size:
+                    self.list.remove(cur)
+                    self.list.insert(0, cur)
+                    self.buildMarkerList()
+                else:
+                    self.updateList(index, newindex)
+        self.instance.moveSelection(self.instance.moveDown)
+
+    def updateList(self, index, newindex):
+        service1 = self.list[index][0]
+        service2 = self.list[newindex][0]
+        tmp = self.list[index]
+        self.list[index] = self.list[newindex]
+        self.list[newindex] = tmp
+        if service1.flags & eServiceReference.isMarker or service2.flags & eServiceReference.isMarker:
+            self.buildMarkerList()
+
+    def getNextBeginningWithChar(self, char):
+        found = False
+        index = 0
+        for i in self.list:
+            service = i[0]
+            info = self.service_center.info(service)
+            serviceName = info.getName(service) or ServiceReference(service).getServiceName() or ''
+            if serviceName != '':
+                idx = 0
+                length = len(serviceName) - 1
+                while idx <= length:
+                    sn = serviceName[idx]
+                    if ord(sn) >= 33 and ord(sn) < 127:
+                        if sn == char:
+                            found = True
+                        break
+                    idx += 1
+
+            if found:
+                break
+            else:
+                index += 1
+
+        return index
+
+    def moveToChar(self, char):
+        print 'Next char: '
+        index = self.getNextBeginningWithChar(char)
+        indexup = self.getNextBeginningWithChar(char.upper())
+        if indexup != 0:
+            if index > indexup or index == 0:
+                index = indexup
+        self.instance.moveSelectionTo(index)
+        print 'Moving to character ' + str(char)
+
+    def moveToNextMarker(self):
+        index = self.getCurrentIndex()
+        idx = self.size - 1
+        for marker in self.marker_list:
+            if index < marker:
+                idx = marker
+                break
+
+        self.instance.moveSelectionTo(idx)
+
+    def moveToPrevMarker(self):
+        index = self.getCurrentIndex()
+        idx = 0
+        for marker in reversed(self.marker_list):
+            if index > marker:
+                idx = marker
+                break
+
+        self.instance.moveSelectionTo(idx)
+
+    def moveToIndex(self, index):
+        self.instance.moveSelectionTo(index)
+
+    def getCurrentIndex(self):
+        return self.instance.getCurrentIndex()
+
+    GUI_WIDGET = eListbox
+
+    def postWidgetCreate(self, instance):
+        instance.setWrapAround(True)
+        instance.setContent(self.l)
+        instance.selectionChanged.get().append(self.selectionChanged)
+        self.setMode(self.mode)
+        self.renderLabel = eLabel(self.instance)
+        self.renderLabel.resize(eSize(450, 0))
+        self.renderLabel.hide()
+
+    def preWidgetRemove(self, instance):
+        instance.setContent(None)
+        instance.selectionChanged.get().remove(self.selectionChanged)
+        return
+
+    def getRoot(self):
+        return self.root
+
+    def getRootServices(self):
+        serviceHandler = eServiceCenter.getInstance()
+        list = serviceHandler.list(self.root)
+        dest = []
+        if list is not None:
+            while 1:
+                y = list.getNext()
+                if y.valid():
+                    dest.append(y.toString())
+                else:
+                    break
+
+        return dest
+
+    def setNumberOffset(self, offset):
+        self.numberoffset = offset
+
+    def setPlayableIgnoreService(self, ref):
+        self.is_playable_ignore = ref
+
+    def setRoot(self, root, justSet = False):
+        self.root = root
+        self.list = []
+        if justSet:
+            self.l.setList(self.list)
+            self.size = 0
+            return
+        serviceref = root.toString()
+        self.marker_list = []
+        list = self.service_center.list(self.root)
+        list = list.getContent('R', True)
+        index = 0
+        for i in list:
+            self.list.append((i,))
+            if i.flags & eServiceReference.isMarker:
+                self.marker_list.append(index)
+            index += 1
+
+        self.finishFill(sort=False)
+        self.selectionChanged()
+
+    def resetRoot(self):
+        self.s = eListboxServiceContent()
+        index = self.instance.getCurrentIndex()
+        self.s.setRoot(self.root, False)
+        self.s.sort()
+        self.instance.moveSelectionTo(index)
+
+    def removeCurrent(self):
+        if self.list:
+            cur = self.l.getCurrentSelection()
+            if cur and cur[0]:
+                self.list.remove(cur)
+                self.size -= 1
+                self.buildMarkerList()
+                self.l.invalidate()
+
+    def buildMarkerList(self):
+        index = 0
+        self.marker_list = []
+        for service in self.list:
+            if service[0].flags & eServiceReference.isMarker:
+                self.marker_list.append(index)
+            index += 1
+
+    def addService(self, service, beforeCurrent = False):
+        if beforeCurrent and self.size:
+            index = self.getCurrentIndex()
+            self.list.insert(index, (service,))
+        else:
+            self.list.append((service,))
+        self.buildMarkerList()
+        self.size += 1
+        self.l.invalidate()
+
+    def finishFill(self, sort = True):
+        self.renderLabel.setFont(self.ServiceNameFont)
+        self.size = len(self.list)
+        if sort:
+            self.list.sort(self.sortList)
+        self.l.setList(self.list)
+        self.instance.moveSelectionTo(0)
+
+    def sortList(self, a, b):
+        return cmp(a[0].getUnsignedData(4), b[0].getUnsignedData(4))
+
+    def clearMarks(self):
+        self.marked = []
+
+    def isMarked(self, ref):
+        try:
+            index = self.marked.index(ref)
+            return True
+        except ValueError:
+            return False
+
+    def addMarked(self, ref):
+        self.marked.append(ref)
+        self.l.invalidateEntry(self.getCurrentIndex())
+
+    def removeMarked(self, ref):
+        self.marked.remove(ref)
+        self.l.invalidateEntry(self.getCurrentIndex())
+
+    def getMarked(self):
+        return [ marks.toString() for marks in self.marked ]
+
+    def lookupService(self, ref):
+        index = 0
+        for i in self.list:
+            if i[0] == ref:
+                return index
+            index += 1
+
+        return index
+
+    def setCurrentMarked(self, state):
+        prev = self.current_marked
+        self.current_marked = state
+        if state != prev:
+            if not state:
+                list = self.service_center.list(self.root)
+                if list is not None:
+                    mutableList = list.startEdit()
+                    if mutableList:
+                        position = self.getCurrentIndex()
+                        cur = self.l.getCurrentSelection()
+                        if cur and cur[0]:
+                            mutableList.moveService(cur[0], position)
+            self.l.invalidateEntry(self.getCurrentIndex())
+        return
+
+    def setMode(self, mode):
+        self.mode = mode
+        self.l.setItemHeight(self.ItemHeight)

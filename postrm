@@ -1,0 +1,9 @@
+#!/bin/sh
+rm -rf /usr/lib/enigma2/python/Plugins/SystemPlugins/ExtraChannelSelction/ 
+echo ""
+echo ""
+echo ""
+echo "Plugin removed! You should restart GUI now!"
+echo ""
+sleep 3
+exit 0
