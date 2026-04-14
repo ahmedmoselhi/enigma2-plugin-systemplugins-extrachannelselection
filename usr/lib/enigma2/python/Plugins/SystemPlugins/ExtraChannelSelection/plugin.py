@@ -852,11 +852,15 @@ class ExtraChannelSelection(Screen, ConfigListScreen):
         self['blue_key'] = StaticText(_('Backup'))
         self['description'] = Label('')
         self['test'] = TestScreenList([])
-        self['setupActions'] = ActionMap(['SetupActions', 'OkCancelActions', 'ColorActions'], {'red': (self.cancel), 'cancel': (self.cancel), 
+        self['setupActions'] = ActionMap(['SetupActions', 'OkCancelActions', 'ColorActions', 'DirectionActions'], {'red': (self.cancel), 'cancel': (self.cancel), 
            'green': (self.save), 
            'yellow': (self.info), 
            'blue': (self.back), 
-           'ok': (self.save)}, -2)
+           'ok': (self.save), 
+           'up': (self.keyUp), 
+           'down': (self.keyDown), 
+           'left': (self.keyLeft), 
+           'right': (self.keyRight)}, -2)
         ConfigListScreen.__init__(self, [])
         self.initConfig()
         self.createSetup()
