@@ -26,7 +26,7 @@ def _(txt):
     if gettext.dgettext(PluginLanguageDomain, txt):
         return gettext.dgettext(PluginLanguageDomain, txt)
     else:
-        print '[' + PluginLanguageDomain + '] fallback to default translation for ' + txt
+        print('[' + PluginLanguageDomain + '] fallback to default translation for ' + txt)
         return gettext.gettext(txt)
 
     return
@@ -2014,7 +2014,3 @@ def TestScreenListEntry(enabled, endmode, text, nummode, bordermode, barpercmode
         addingText2(x3Pos, 64, kk3, 32, rthlrtvc, 3, eventname, eventColor, None)
     return res
 
-
-return
-
-# okay decompiling ./TestScreen.pyo
