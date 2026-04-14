@@ -552,12 +552,10 @@ def StartMainSession(reason, **kwargs):
     CHECKPATH = '/usr/lib/enigma2/python/Plugins/SystemPlugins/ExtraChannelSelection/forchek/'
     allow = False
     import os
-    if fileExists(CHANNELPATH + 'ChannelSelection.pyo'):
-        if os.path.getsize(CHANNELPATH + 'ChannelSelection.pyo') != os.path.getsize(CHECKPATH + 'ChannelSelection.pyo'):
-            allow = False
-        else:
-            allow = True
-        allow = True
+    current_file = CHANNELPATH + 'ChannelSelection.py'
+    check_file = CHECKPATH + 'ChannelSelection.py'
+    if fileExists(current_file) and fileExists(check_file):
+        allow = os.path.getsize(current_file) == os.path.getsize(check_file)
     if allow:
         if config.plugins.ExtraChannelSelection.enabled.value:
             if not alreadyPatch():
@@ -1379,4 +1377,3 @@ def main(session, **kwargs):
 def Plugins(path, **kwargs):
     list = [PluginDescriptor(name=_('ExtraChannelSelection'), description=_('Settings of service list on channel selection'), where=[PluginDescriptor.WHERE_PLUGINMENU, PluginDescriptor.WHERE_EXTENSIONSMENU], icon='ecs.png', fnc=main), PluginDescriptor(where=[PluginDescriptor.WHERE_SESSIONSTART], fnc=StartMainSession)]
     return list
-
